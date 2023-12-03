@@ -12,7 +12,7 @@ func main() {
 		fmt.Println("Error reading file")
 		panic(err)
 	}
-
+	defer fd.Close()
 	arr := make([][]rune, 0)
 
 	fileReader := bufio.NewScanner(fd)

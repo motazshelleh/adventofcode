@@ -26,6 +26,7 @@ func main() {
 		fmt.Println("Error reading file")
 		panic(err)
 	}
+	defer fd.Close()
 	sum := 0
 	inputScanner := bufio.NewScanner(fd)
 	for inputScanner.Scan() {
