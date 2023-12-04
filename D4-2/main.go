@@ -20,22 +20,28 @@ func main() {
 	fileReader := bufio.NewScanner(fd)
 	totalPoints := 0
 	pointsArr := make([]int, 0)
+	startPos := 0
 	for fileReader.Scan() {
 		line := fileReader.Text()
 		chosenNums, winningNums := splitLine(line)
 		points := findWinningPoints(chosenNums, winningNums)
 		cardDuplicate := 0
 		end := len(pointsArr)
-		for i := 0; i < end; i++ {
+		firstNonZero := false
+		for i := startPos; i < end; i++ {
 			if pointsArr[i] != 0 {
 				cardDuplicate += 1
 				pointsArr[i]--
 				pointsArr = append(pointsArr, points)
+				firstNonZero = true
+			} else if !firstNonZero {
+				startPos = i
 			}
 		}
 		pointsArr = append(pointsArr, points)
 		totalPoints += cardDuplicate + 1
 	}
+	fmt.Println(len(pointsArr), startPos)
 	fmt.Println(totalPoints)
 }
 
