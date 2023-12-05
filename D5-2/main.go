@@ -10,9 +10,14 @@ import (
 )
 
 type rangeMap struct {
-	dest   int64
-	src    int64
-	length int64
+	from     int64
+	to       int64
+	mappedTo int64
+}
+
+type seed struct {
+	from int64
+	to   int64
 }
 
 func main() {
@@ -27,14 +32,20 @@ func main() {
 	fileReader.Scan()
 	seedsRawInput := fileReader.Text()[6:]
 	var seeds []int64 = parseStringLineIntoArray(seedsRawInput)
-	fmt.Println("seeds", seeds)
+
+	seedsArr := make([]seed, 0)
+
+	for i := 0; i < len(seeds); i += 2 {
+		seedsArr = append(seedsArr, seed{seeds[i], seeds[i] + seeds[i+1] - 1})
+	}
+
+	fmt.Println("seeds", seedsArr)
 	rangeMaps := make([][]rangeMap, 0)
 	currentRangeMap := make([]rangeMap, 0)
 	for fileReader.Scan() {
 		line := fileReader.Text()
 		if strings.TrimSpace(line) == "" {
 			if len(currentRangeMap) > 0 {
-				sortRangeMap(currentRangeMap)
 				rangeMaps = append(rangeMaps, currentRangeMap)
 			}
 			currentRangeMap = make([]rangeMap, 0)
@@ -45,51 +56,29 @@ func main() {
 		}
 		rm := rangeMap{}
 		parsedLine := parseStringLineIntoArray(line)
-		rm.dest = parsedLine[0]
-		rm.src = parsedLine[1]
-		rm.length = parsedLine[2]
+		rm.from = parsedLine[1]
+		rm.to = parsedLine[1] + parsedLine[2] - 1
+		rm.mappedTo = parsedLine[0]
 		currentRangeMap = append(currentRangeMap, rm)
 	}
 	rangeMaps = append(rangeMaps, currentRangeMap)
 
-	finalMin := int64(-1)
-	for i := 0; i < len(seeds); i += 2 {
-		fmt.Println("...")
-		src := make([]int64, 0)
-		for j := int64(seeds[i]); j < seeds[i]+seeds[i+1]; j++ {
-			src = append(src, j)
-			// batch size is 1 million
-			if len(src) < 1000000 && j < seeds[i]+seeds[i+1]-1 {
-				continue
-			}
-			min := int64(999999999999999999)
-			// fmt.Println("src", src)
-			for _, rm := range rangeMaps {
-				// for _, v := range rm {
-				// 	fmt.Println(v)
-				// }
-				// sort.Slice(src, func(i, j int) bool {
-				// 	return src[i] < src[j]
-				// })
-				min, src = mapFromSourceToDest(rm, src)
-				// fmt.Println("src", src)
-				// break
-			}
+	for i := 0; i < len(rangeMaps); i++ {
+		// first we fill the missing rangeMaps
+		// second we sort -> expand & map the seeds
+		// third after going through all rangeMap we take the min value from the seeds
+		rangeMaps[i] = fillMissingRangeMap(rangeMaps[i])
+		seedsArr = expandRangeMap(rangeMaps[i], seedsArr)
+	}
 
-			for _, v := range src {
-				if v < min {
-					min = v
-				}
-			}
-			if finalMin == -1 || min < finalMin {
-				finalMin = min
-			}
-
-			src = make([]int64, 0)
+	min := int64(-1)
+	for _, v := range seedsArr {
+		if min == -1 || v.from < min {
+			min = v.from
 		}
 	}
 
-	fmt.Println("min", finalMin)
+	fmt.Println("min", min)
 }
 
 func parseStringLineIntoArray(line string) []int64 {
@@ -101,64 +90,69 @@ func parseStringLineIntoArray(line string) []int64 {
 	return array
 }
 
-func expandSeedsArray(seeds []int64) []int64 {
-	expanded := make([]int64, 0)
-	fmt.Println("seeds", seeds)
-	for i := 0; i < len(seeds); i += 2 {
-		for j := int64(seeds[i]); j < seeds[i]+seeds[i+1]; j++ {
-			expanded = append(expanded, j)
-		}
-	}
-	return expanded
-}
-
 func sortRangeMap(rm []rangeMap) {
 	sort.Slice(rm, func(i, j int) bool {
-		return rm[i].src < rm[j].src
+		return rm[i].from < rm[j].from
 	})
 }
 
-func mapFromSourceToDest(rm []rangeMap, input []int64) (int64, []int64) {
-	output := make([]int64, len(input))
-	// fmt.Println("rm", rm)
-	// rangeMapIndex := 0
-	minValue := int64(-1)
-	for i := 0; i < len(input); i++ {
-		// fmt.Println(rangeMapIndex)
-
-		// for rangeMapIndex < len(rm) && input[i] > rm[rangeMapIndex].src+rm[rangeMapIndex].length-1 {
-		// 	rangeMapIndex++
-		// }
-
-		// fmt.Println("rangeMapIndex", rangeMapIndex, "input[i]", input[i])
-		// if rangeMapIndex < len(rm) && input[i] >= rm[rangeMapIndex].src && input[i] <= rm[rangeMapIndex].src+rm[rangeMapIndex].length-1 {
-		ok, r := validate(rm, input[i])
-		if ok {
-			mappedValue := input[i] - r.src + r.dest
-			// fmt.Println("mappedValue", mappedValue)
-			if minValue == -1 || mappedValue < minValue {
-				minValue = mappedValue
-			}
-
-			output[i] = mappedValue
-		} else {
-
-			if minValue == -1 || input[i] < minValue {
-				minValue = input[i]
-			}
-
-			output[i] = input[i]
+func fillMissingRangeMap(rm []rangeMap) []rangeMap {
+	sortRangeMap(rm)
+	filled := make([]rangeMap, 0)
+	if rm[0].from > 0 {
+		filled = append(filled, rangeMap{0, rm[0].from - 1, 0})
+	}
+	for i := 0; i < len(rm)-1; i++ {
+		filled = append(filled, rm[i])
+		if rm[i].to < rm[i+1].from-1 {
+			filled = append(filled, rangeMap{rm[i].to + 1, rm[i+1].from - 1, rm[i].to + 1})
 		}
 	}
-
-	return minValue, output
+	filled = append(filled, rm[len(rm)-1])
+	return filled
 }
 
-func validate(rm []rangeMap, input int64) (bool, rangeMap) {
-	for _, v := range rm {
-		if input >= v.src && input <= v.src+v.length-1 {
-			return true, v
+func expandRangeMap(rm []rangeMap, seeds []seed) []seed {
+	expanded := make([]seed, 0)
+
+	for i := 0; i < len(seeds); i++ {
+		// for each seed we go through the rangeMap and check the boarders and map them to their correct location
+		doneProcessingSeed := false
+		for _, v := range rm {
+			// until we finish rm or seeds[i] is fully expanded
+			temp := seed{}
+			// range.from is "source range start"
+			// range.to is "source range start" + "range length"
+			// check if the seed is within the rangeMap =>   |range.from    seed.from    range.to|
+			if v.from <= seeds[i].from && v.to >= seeds[i].from {
+				// if the seed is within the rangeMap
+				// then we create a new seed with the mappedTo value
+				diff := (seeds[i].from - v.from)
+				temp.from = v.mappedTo + diff
+
+				// check if the seed is fully within the rangeMap =>   |range.from    seed.from    seed.to    range.to|
+				if seeds[i].to <= v.to {
+					// if the seed is fully within the rangeMap
+					// then we close the seed at the relative location to mappedTo with the same original length and mark it as done
+					temp.to = temp.from + (seeds[i].to - seeds[i].from)
+					doneProcessingSeed = true
+				} else {
+					// if the seed is not fully within the rangeMap
+					// then we close the seed at the end of the current range and the length is the remaining length till the range.to
+					temp.to = temp.from + (v.to - seeds[i].from)
+					seeds[i].from = v.to + 1
+				}
+				expanded = append(expanded, temp)
+			}
+			if doneProcessingSeed {
+				break
+			}
+		}
+
+		// add the remaining seeds if there is any
+		if !doneProcessingSeed {
+			expanded = append(expanded, seeds[i])
 		}
 	}
-	return false, rangeMap{}
+	return expanded
 }
