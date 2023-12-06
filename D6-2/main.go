@@ -36,7 +36,7 @@ func main() {
 		// fmt.Println("first time", findFirstTime(times[i], distances[i]))
 		// fmt.Println("last time", findLastTime(times[i], distances[i]))
 
-		total := findLastTime(times[i], distances[i]) - findFirstTime(times[i], distances[i]) + 1
+		total := findLastTimeLazy(times[i], distances[i]) - findFirstTimeLazy(times[i], distances[i]) + 1
 		mul *= total
 	}
 
@@ -56,7 +56,37 @@ func parseStringLineIntoArray(line string) []int {
 	return array
 }
 
-func findFirstTime(time int, distance int) int {
+func findFirstTimeBinarySearch(time int, distance int) int {
+	left := 1
+	right := time - 1
+	for left <= right {
+		mid := (left + right) / 2
+		speed := mid
+		if (time-mid)*speed > distance {
+			right = mid - 1
+		} else {
+			left = mid + 1
+		}
+	}
+	return left
+}
+
+func findLastTimeBinarySearch(time int, distance int) int {
+	left := 1
+	right := time - 1
+	for left <= right {
+		mid := (left + right) / 2
+		speed := mid
+		if (time-mid)*speed > distance {
+			left = mid + 1
+		} else {
+			right = mid - 1
+		}
+	}
+	return right
+}
+
+func findFirstTimeLazy(time int, distance int) int {
 	for i := 1; i < time; i++ {
 		speed := i
 		if (time-i)*speed > distance {
@@ -66,7 +96,7 @@ func findFirstTime(time int, distance int) int {
 	return -1
 }
 
-func findLastTime(time int, distance int) int {
+func findLastTimeLazy(time int, distance int) int {
 	for i := time - 1; i > 0; i-- {
 		speed := i
 		if (time-i)*speed > distance {
