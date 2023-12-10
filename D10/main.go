@@ -161,23 +161,28 @@ func walkWall(sketch [][]rune, originalX int, originalY int, originalVisited [][
 		mapDrawn[x][y] = insideDirection
 		insideDirection1, deltaX, deltaY := mapInsideDirection(sketch[x][y], insideDirection)
 		insideDirection = insideDirection1
+		if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
+			total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+		}
 		switch sketch[x][y] {
 		case '|':
-			if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
-				total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
-			}
-
 			x += currentDirection.x
 		case '-':
-			if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
-				total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
-			}
 			y += currentDirection.y
 		case 'J':
-			if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
-				total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+			if insideDirection == 'R' {
+				deltaX := 1
+				deltaY := 0
+				if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
+					total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+				}
+			} else if insideDirection == 'D' {
+				deltaX := 0
+				deltaY := 1
+				if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
+					total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+				}
 			}
-
 			if currentDirection.y == 1 {
 				x -= 1
 				currentDirection = direction{-1, 0}
@@ -186,13 +191,15 @@ func walkWall(sketch [][]rune, originalX int, originalY int, originalVisited [][
 				currentDirection = direction{0, -1}
 			}
 		case 'L':
-			if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
-				total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
-			}
-
 			if insideDirection == 'L' {
 				deltaX := 1
 				deltaY := 0
+				if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
+					total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+				}
+			} else if insideDirection == 'D' {
+				deltaX := 0
+				deltaY := -1
 				if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
 					total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
 				}
@@ -206,10 +213,19 @@ func walkWall(sketch [][]rune, originalX int, originalY int, originalVisited [][
 				currentDirection = direction{0, 1}
 			}
 		case 'F':
-			if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
-				total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+			if insideDirection == 'L' {
+				deltaX := -1
+				deltaY := 0
+				if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
+					total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+				}
+			} else if insideDirection == 'U' {
+				deltaX := 0
+				deltaY := -1
+				if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
+					total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+				}
 			}
-
 			if currentDirection.y == -1 {
 				x += 1
 				currentDirection = direction{1, 0}
@@ -218,8 +234,18 @@ func walkWall(sketch [][]rune, originalX int, originalY int, originalVisited [][
 				currentDirection = direction{0, 1}
 			}
 		case '7':
-			if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
-				total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+			if insideDirection == 'R' {
+				deltaX := -1
+				deltaY := 0
+				if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
+					total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+				}
+			} else if insideDirection == 'U' {
+				deltaX := 0
+				deltaY := 1
+				if isWithinBounds(sketch, x+deltaX, y+deltaY) && !originalVisited[x+deltaX][y+deltaY] {
+					total += floodInside(sketch, x+deltaX, y+deltaY, visited, originalVisited, mapDrawn)
+				}
 			}
 
 			if currentDirection.y == 1 {
