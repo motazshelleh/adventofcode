@@ -14,6 +14,10 @@ type direction struct {
 	x, y int
 }
 
+var startReplacement rune = '-'
+var startDirection direction = direction{0, 1}
+var startInsideDirection rune = 'U'
+
 func main() {
 	fd, err := os.Open("input.txt")
 	if err != nil {
@@ -68,10 +72,9 @@ func main() {
 
 	flood(sketch, startX, startY, mapping)
 
-	sketch[startX][startY] = '-' // manually set to - (changed the shape of the start pipe) TODO: fix this
+	sketch[startX][startY] = startReplacement // manually set to - (changed the shape of the start pipe) TODO: fix this
 	visited := walkConnected(sketch, startX, startY)
 	walkWall(sketch, startX, startY, visited)
-	fmt.Println(visited[104][37])
 }
 
 func findStartingPoint(sketch [][]rune) (int, int) {
@@ -145,8 +148,8 @@ func walkWall(sketch [][]rune, originalX int, originalY int, originalVisited [][
 	x := originalX
 	y := originalY
 	total := 0
-	currentDirection := direction{0, 1}
-	insideDirection := 'U'
+	currentDirection := startDirection
+	insideDirection := startInsideDirection
 	mapDrawn := make([][]rune, len(sketch))
 	for i := range mapDrawn {
 		mapDrawn[i] = make([]rune, len(sketch[0]))
@@ -338,8 +341,8 @@ func walkConnected(sketch [][]rune, originalX int, originalY int) [][]bool {
 	x := originalX
 	y := originalY
 	// currentDirection & insideDirection are set manually to match the starting pipe (depends on the input) TODO: fix this
-	currentDirection := direction{0, 1}
-	insideDirection := 'U'
+	currentDirection := startDirection
+	insideDirection := startInsideDirection
 	for {
 		visited[x][y] = true
 		insideDirection1, _, _ := mapInsideDirection(sketch[x][y], insideDirection)
